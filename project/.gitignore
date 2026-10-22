@@ -1,0 +1,42 @@
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Node and CDK dependencies/build output
+node_modules/
+dist/
+cdk.out/
+.cdk.staging/
+
+# Project-specific local state
+.cli/
+.cache/
+starter/agentcore/agentcore_runtime/
+starter/agentcore/*.zip
+starter/agentcore/cdk/dist/
+
+# Test and runtime artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+payload.json
+response.json
+
+# Local tooling and operating-system files
+.claude/
+.idea/
+.vscode/
+.DS_Store
+*.log
+_to_delete/
