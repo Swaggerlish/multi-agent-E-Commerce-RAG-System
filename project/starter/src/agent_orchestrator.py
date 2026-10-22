@@ -225,7 +225,8 @@ def build_inventory_agent() -> Agent:
     """
 
     model = BedrockModel(model_id=config.WORKER_MODEL_ID,
-                         region_name=config.AWS_REGION)
+                         region_name=config.AWS_REGION,
+                         temperature=0.1)
 
     system_prompt = (
         "You are InventoryAgent for NovaMart. Retrieve factual customer and "
@@ -318,7 +319,8 @@ def build_refund_agent() -> Agent:
     """
 
     model = BedrockModel(model_id=config.WORKER_MODEL_ID,
-                         region_name=config.AWS_REGION)
+                         region_name=config.AWS_REGION,
+                         temperature=0.1)
 
     system_prompt = (
         "You are RefundAgent for NovaMart. Read inventory facts from "
@@ -411,7 +413,8 @@ def build_policy_agent() -> Agent:
     # Create the ReturnsPolicyRetrieverAgent with the tool above
     returns_retriever = Agent(
         model=BedrockModel(model_id=config.WORKER_MODEL_ID,
-                           region_name=config.AWS_REGION),
+                           region_name=config.AWS_REGION,
+                           temperature=0.0),
         system_prompt="Retrieve and quote only grounded returns-policy passages.",
         tools=[retrieve_returns_policy],
     )
@@ -427,7 +430,8 @@ def build_policy_agent() -> Agent:
     # Create the ShippingPolicyRetrieverAgent with the tool above
     shipping_retriever = Agent(
         model=BedrockModel(model_id=config.WORKER_MODEL_ID,
-                           region_name=config.AWS_REGION),
+                           region_name=config.AWS_REGION,
+                           temperature=0.0),
         system_prompt="Retrieve and quote only grounded shipping-policy passages.",
         tools=[retrieve_shipping_policy],
     )
@@ -443,7 +447,8 @@ def build_policy_agent() -> Agent:
     # Create the WarrantyPolicyRetrieverAgent with the tool above
     warranty_retriever = Agent(
         model=BedrockModel(model_id=config.WORKER_MODEL_ID,
-                           region_name=config.AWS_REGION),
+                           region_name=config.AWS_REGION,
+                           temperature=0.0),
         system_prompt="Retrieve and quote only grounded warranty-policy passages.",
         tools=[retrieve_warranty_policy],
     )
@@ -520,7 +525,8 @@ def build_policy_agent() -> Agent:
 
     # Create the PolicyAgent coordinator model
     model = BedrockModel(model_id=config.WORKER_MODEL_ID,
-                         region_name=config.AWS_REGION)
+                         region_name=config.AWS_REGION,
+                         temperature=0.2)
 
     # System prompt for PolicyAgent coordinator
     system_prompt = (
@@ -548,7 +554,8 @@ def build_communication_agent() -> Agent:
     """
 
     model = BedrockModel(model_id=config.WORKER_MODEL_ID,
-                         region_name=config.AWS_REGION)
+                         region_name=config.AWS_REGION,
+                         temperature=0.3)
 
     system_prompt = (
         "You are CommunicationAgent for NovaMart. Read the complete "
@@ -593,18 +600,29 @@ def build_orchestrator_agent(
     """
 
     model = BedrockModel(model_id=config.ORCHESTRATOR_MODEL_ID,
-                         region_name=config.AWS_REGION)
+                         region_name=config.AWS_REGION,
+                         temperature=0.0)
 
     system_prompt = (
         "You are the NovaMart Orchestrator. Extract the session ID and "
-        "customer ID from the user message. Always call initialize_session "
-        "first and route_to_communication_agent last. For order status or "
-        "return requests, call inventory first; for returns, call policy as "
-        "needed and then refund after inventory. For policy questions call "
-        "the policy agent. For arithmetic questions, skip inventory, policy, "
-        "and refund, but still call communication last; calculate using full "
-        "precision and round currency only at the end. Never answer directly "
-        "when a routing tool is appropriate."
+        "customer ID from the user message and follow these six routing rules "
+        "exactly. Rule 1: for EVERY request, always call initialize_session "
+        "first. Rule 2: for order status, return, or refund requests, call "
+        "route_to_inventory_agent first and then call "
+        "route_to_refund_agent; for a return request, call "
+        "route_to_policy_agent when policy terms are needed before the refund. "
+        "Rule 3: for policy meaning questions about windows, rates, or terms, "
+        "call route_to_policy_agent. Rule 4: for account questions, including "
+        "customer tier, 'what is my tier?', 'am I premium?', or customer "
+        "profile questions, call route_to_inventory_agent. NEVER route account questions to route_to_policy_agent "
+        "because PolicyAgent only knows policy text, not customer data. Rule 5: for math or calculation questions, calculate "
+        "without calling InventoryAgent, PolicyAgent, or RefundAgent; use full "
+        "precision and round currency only at the end. Rule 6: for EVERY "
+        "request, always call route_to_communication_agent as the LAST step. "
+        "The route_to_communication_agent result is the final customer-facing "
+        "response: return it unchanged. Never write the final customer-facing "
+        "response yourself, never finish after initialization or another "
+        "worker, and never answer directly when a routing tool is appropriate."
     )
 
     # Each routing tool follows the same pattern:
